@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# @author github -@bhayward93
+# Spliced code sources:
+#    u/Altinus - https://www.reddit.com/r/i3wm/comments/5e593j/script_to_toggle_gaps_on_and_off/ 
+#    Jebby     - https://stackoverflow.com/questions/51349798/how-to-check-whether-any-window-is-open-in-i3/51352748#51352748
+
+INNER=10
+OUTER=10
+ 
+function gaps-switch(){ 
+    if [[ -z "$1" || "$1" == "toggle" ]]; then
+ 
+        # Get current workspace.
+        workspace=$(i3-msg -t get_workspaces \
+                | jq -r '.[] | if .["focused"] then .["name"] else empty end')
+        # Get current inner gap size. (0 means default)
+        inner_gaps=$(i3-msg -t get_tree \
+                | jq -r 'recurse(.nodes[]) | if .type == "workspace" and .name == "'"$workspace"'" then .gaps.inner else empty end')
+    fi
+    if [[ "$1" == "on" ]]; then
+        i3-msg "gaps inner current set $INNER; gaps outer current set $OUTER"
+    else
+        i3-msg "gaps inner current set 0; gaps outer current set 0"
+    fi
+}
+
+WINDOWS=$(xdotool search --all --onlyvisible --desktop $(xprop -notype -root _NET_CURRENT_DESKTOP | cut -c 24-) "" 2>/dev/null)
+NUM=$(echo "$WINDOWS" | wc -l)
+if [ $NUM -gt 2 ]; then
+	gaps-switch "off"
+elif [ $NUM -lt 3 ]; then
+	gaps-switch "on"
+fi
